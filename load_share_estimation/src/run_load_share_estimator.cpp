@@ -5,7 +5,7 @@ int main(int argc, char **argv) {
   ros::init(argc, argv, "boilerplate_cpp");
   ros::NodeHandle nodeHandle;
 
-  BasicWorker worker(&nodeHandle);
+  LoadShareEstimator worker(&nodeHandle);
   if (!worker.init()) {
     ROS_ERROR("Error initializing node.");
     return -1;
@@ -15,7 +15,7 @@ int main(int argc, char **argv) {
   ros::Duration(0.5).sleep();
 
   ROS_INFO_STREAM("Node started");
-  ros::Rate rate = ros::Rate(2.0);
+  ros::Rate rate = ros::Rate(300);
   while (ros::ok()) {
     worker.work();
 
