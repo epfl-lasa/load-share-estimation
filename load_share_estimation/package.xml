@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<package>
+  <name>load_share_estimation</name>
+  <version>0.0.0</version>
+  <description>Dynamically estimate the load share using force/torque sensor data</description>
+
+  <maintainer email="felixd@gmail.com">Felix Duvallet</maintainer>
+  <author email="felixd@gmail.com">Felix Duvallet</author>
+  <maintainer email="jose.medina@epfl.ch">Jose Medina</maintainer>
+  <author email="jose.medina@epfl.ch">Jose Medina</author>
+
+  <license>MIT</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>eigen</build_depend>
+  <build_depend>eigen_conversions</build_depend>
+  <build_depend>sg_differentiation</build_depend>
+  <build_depend>tf_conversions</build_depend>
+  <run_depend>eigen</run_depend>
+  <run_depend>eigen_conversions</run_depend>
+  <run_depend>sg_differentiation</run_depend>
+  <run_depend>tf_conversions</run_depend>
+
+  <!-- The export tag contains other, unspecified, tags -->
+  <export>
+    <!-- Other tools can request additional information be placed here -->
+
+  </export>
+</package>
