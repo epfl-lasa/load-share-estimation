@@ -1,12 +1,25 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(load_share_estimation)
 
+macro(use_cxx11)
+    if (CMAKE_VERSION VERSION_LESS "3.1")
+        if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+            set (CMAKE_CXX_FLAGS "--std=gnu++11 ${CMAKE_CXX_FLAGS}")
+        endif ()
+    else ()
+        set (CMAKE_CXX_STANDARD 11)
+    endif ()
+endmacro(use_cxx11)
+use_cxx11()
+
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   eigen_conversions
   sg_differentiation
+  std_msgs
+  geometry_msgs
   tf_conversions
 )
 
@@ -99,8 +112,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES load_share_estimation
+  INCLUDE_DIRS include
+  LIBRARIES load_share_estimation
 #  CATKIN_DEPENDS eigen_conversions sg_differentiation tf_conversions
 #  DEPENDS eigen
 )
@@ -112,34 +125,34 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 # include_directories(include)
-# TODO: Check names of system library include directories (eigen)
 include_directories(
-  ${catkin_INCLUDE_DIRS}
-  ${eigen_INCLUDE_DIRS}
+        include
+        ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
-# add_library(load_share_estimation
-#   src/${PROJECT_NAME}/load_share_estimation.cpp
-# )
+ add_library(load_share_estimation
+   src/LoadShareEstimator.cpp
+)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# add_dependencies(load_share_estimation ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(load_share_estimation
+        ${${PROJECT_NAME}_EXPORTED_TARGETS}
+        ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-# add_executable(load_share_estimation_node src/load_share_estimation_node.cpp)
-
-## Add cmake target dependencies of the executable
-## same as for the library above
-# add_dependencies(load_share_estimation_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_executable(load_share_estimation_node src/run_load_share_estimator.cpp)
+add_dependencies(load_share_estimation_node
+        ${${PROJECT_NAME}_EXPORTED_TARGETS}
+        ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(load_share_estimation_node
-#   ${catkin_LIBRARIES}
-#   ${eigen_LIBRARIES}
-# )
+ target_link_libraries(load_share_estimation_node
+         load_share_estimation
+         ${catkin_LIBRARIES}
+)
 
 #############
 ## Install ##
