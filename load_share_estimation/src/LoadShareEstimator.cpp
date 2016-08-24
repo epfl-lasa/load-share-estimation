@@ -12,9 +12,9 @@ LoadShareEstimator::LoadShareEstimator(ros::NodeHandle *nodeHandle)
       tf_listener_ft_sensor_(),
       tf_listener_robot_(){
 
-  ft_calib_force_bias_.setZero();
-  ft_calib_torque_bias_.setZero();
-  ft_calib_orientation_.setIdentity();
+  ft_calibration_.orientation.setIdentity();
+  ft_calibration_.force_bias.setZero();
+  ft_calibration_.torque_bias.setZero();
 }
 
 bool LoadShareEstimator::init() {
@@ -26,9 +26,11 @@ bool LoadShareEstimator::init() {
   const double ft_delay = 0.01;
 
   // TODO Get these from yaml parameters.
-  mass_object_ = 1.0;
-  mass_tool_ = 1.0;
-  mass_ft_plate_ = 1.0;
+
+  masses_.object = 1.0;
+  masses_.tool = 1.0;
+  masses_.ft_plate = 1.0;
+
 
   if(!load_calibration()) {
     ROS_ERROR("Could not load f/t sensor calibration information.");
@@ -58,10 +60,11 @@ bool LoadShareEstimator::load_calibration() {
                              lwr_ft_calib_orientation_list)) {
     return false;
   }
-  ft_calib_orientation_.x() = lwr_ft_calib_orientation_list.at(0);
-  ft_calib_orientation_.y() = lwr_ft_calib_orientation_list.at(1);
-  ft_calib_orientation_.z() = lwr_ft_calib_orientation_list.at(2);
-  ft_calib_orientation_.w() = lwr_ft_calib_orientation_list.at(3);
+
+  ft_calibration_.orientation.x() = lwr_ft_calib_orientation_list.at(0);
+  ft_calibration_.orientation.y() = lwr_ft_calib_orientation_list.at(1);
+  ft_calibration_.orientation.z() = lwr_ft_calib_orientation_list.at(2);
+  ft_calibration_.orientation.w() = lwr_ft_calib_orientation_list.at(3);
 
   return true;
 }
@@ -100,8 +103,8 @@ void LoadShareEstimator::computeSmoothedFTWorld() {
   // Transform forces and torques so they are expressed in world frame.
   Eigen::Matrix3d rot;
   tf::matrixTFToEigen(tf_ft_sensor_.getBasis(), rot);
-  Eigen::Vector3d force_world = rot*(force + ft_calib_force_bias_);
-  Eigen::Vector3d torque_world = rot*(torque + ft_calib_torque_bias_);
+  Eigen::Vector3d force_world = rot*(force + ft_calibration_.force_bias);
+  Eigen::Vector3d torque_world = rot*(torque + ft_calibration_.torque_bias);
 
   for (size_t i=0 ; i < 3 ; i ++ ) {
     force_cur_(i) = filters::exponentialSmoothing(force_world(i), force_prev_(i), 0.25);
@@ -118,25 +121,25 @@ void LoadShareEstimator::setObjectMass(double object_mass) {
   Eigen::Vector3d m_object_g, m_hand_ft_sensor_g, m_joint_g, f_dyn, f_obs, f_obs_dyn, f_int;
 
 
-  mass_object_ = object_mass;
+  masses_.object = object_mass;
 
-  m_object_g << 0, 0, -9.81 * mass_object_;
+  m_object_g << 0, 0, -9.81 * masses_.object;
 
-  const double joint_mass = mass_tool_ + mass_ft_plate_+ mass_object_;
+  const double joint_mass = masses_.tool + masses_.ft_plate + masses_.object;
   mass_object_hand.setZero();
   mass_object_hand.diagonal() << joint_mass, joint_mass, joint_mass;
 
-  m_hand_ft_sensor_g << 0, 0, -9.81 * (mass_ft_plate_ + mass_tool_);
+  m_hand_ft_sensor_g << 0, 0, -9.81 * (masses_.tool + masses_.ft_plate);
   m_joint_g << 0, 0, -9.81 * (joint_mass);
 
   // Compute the force correction term by expressing the expected force in the
   // calibration frame (when we measured the sensor bias).
   Eigen::Matrix3d rotation_world_to_orient_at_calibration;
   rotation_world_to_orient_at_calibration =
-      ft_calib_orientation_.toRotationMatrix();
+      ft_calibration_.orientation.toRotationMatrix();
   Eigen::Vector3d bias_correction =
       rotation_world_to_orient_at_calibration * m_hand_ft_sensor_g;
-  ft_calib_torque_bias_ = bias_correction;
+  ft_calibration_.force_bias = bias_correction;
 }
 
 bool LoadShareEstimator::subscribe_robot_state() {

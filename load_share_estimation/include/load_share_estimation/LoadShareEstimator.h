@@ -47,21 +47,25 @@ class LoadShareEstimator {
   Eigen::Vector3d torque_prev_;
   const double ft_smoothing_constant_ = 0.25;
 
-
   // FT sensor calibration variables: the baseline forces and torques at
   // calibration time and the sensor orientation at the calibration time.
-  Eigen::Quaterniond ft_calib_orientation_;
-  Eigen::Vector3d ft_calib_force_bias_;
-  Eigen::Vector3d ft_calib_torque_bias_;
-  // TODO: These need to be set
+  struct ft_calibration_t {
+    Eigen::Quaterniond orientation;
+    Eigen::Vector3d force_bias;
+    Eigen::Vector3d torque_bias;
+  };
+  ft_calibration_t ft_calibration_;
 
-  // The mass of the object we are handing over.
-  double mass_object_;
-  // The mass of the tool (hand, gripper, etc...).
-  double mass_tool_;
-  // The mass of the force/torque sensor mounting plate (i.e. the part that's
-  // not bolted on the arm).
-  double mass_ft_plate_;
+  // All the masses we care about in one nice struct: the object (the thing
+  // we're estimating load share for), the tool (hand/griper/etc...), and the
+  // force/torque sensor mounting plate (i.e. the part that's not bolted on the
+  // arm).
+  struct masses_t {
+    double object;
+    double tool;
+    double ft_plate;
+  };
+  masses_t masses_;
 
 
   // The force/torque sensor and the robot root expressed in the world frame.
@@ -72,7 +76,6 @@ class LoadShareEstimator {
 
   bool waitForTransforms();
   void updateTransforms();
-
 
 
   void setObjectMass(double object_mass);
