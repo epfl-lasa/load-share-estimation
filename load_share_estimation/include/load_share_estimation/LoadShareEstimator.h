@@ -19,13 +19,13 @@ class LoadShareEstimator {
 
   bool init();
 
-  bool load_calibration();
-  bool subscribe_ft_sensor(const std::string ft_topic, double ft_delay_time);
-  bool subscribe_robot_state();
+  bool loadCalibration();
+  bool subscribeFTSensor(const std::string ft_topic, double ft_delay_time);
+  bool subscribeRobotState();
 
   bool work();
 
-  void computeSmoothedFTWorld();
+  void computeSmoothedFTInWorldFrame();
 
  protected:
   ros::NodeHandle *nodeHandle_;
@@ -66,7 +66,6 @@ class LoadShareEstimator {
     double ft_plate;
   };
   masses_t masses_;
-
 
   // The force/torque sensor and the robot root expressed in the world frame.
   tf::TransformListener tf_listener_ft_sensor_;

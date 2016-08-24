@@ -32,7 +32,7 @@ bool LoadShareEstimator::init() {
   masses_.ft_plate = 1.0;
 
 
-  if(!load_calibration()) {
+  if(!loadCalibration()) {
     ROS_ERROR("Could not load f/t sensor calibration information.");
     ROS_ERROR("Did you run the calibration script?");  // TODO provide name.
     return false;
@@ -43,17 +43,17 @@ bool LoadShareEstimator::init() {
     ros::Duration(1.0).sleep();
   }
 
-  if(!subscribe_ft_sensor(topic_ft_sensor, ft_delay))
+  if(!subscribeFTSensor(topic_ft_sensor, ft_delay))
     return false;
 
-  if(!subscribe_robot_state())
+  if(!subscribeRobotState())
     return false;
 
   ROS_INFO_STREAM("Load Share Estimator initialization SUCCESS!");
   return true;
 }
 
-bool LoadShareEstimator::load_calibration() {
+bool LoadShareEstimator::loadCalibration() {
 
   std::vector<double> lwr_ft_calib_orientation_list;
   if (!nodeHandle_->getParam("/lwr_ft_calib_orientation",
@@ -69,7 +69,7 @@ bool LoadShareEstimator::load_calibration() {
   return true;
 }
 
-bool LoadShareEstimator::subscribe_ft_sensor(
+bool LoadShareEstimator::subscribeFTSensor(
   const std::string ft_topic, double ft_delay_time) {
 
 
@@ -88,11 +88,11 @@ void LoadShareEstimator::callback_ft_sensor_filtered(
   ft_data_ = *msg;
 }
 
-void LoadShareEstimator::computeSmoothedFTWorld() {
+void LoadShareEstimator::computeSmoothedFTInWorldFrame() {
 
   // NOTE: The f/t data is filtered; in our case this is a constant delay (using
   // the TimeSequencer) to better align the f/t data with the acceleration
- // estimate, which is also slightly delayed.
+  // estimate, which is also slightly delayed.
   Eigen::Vector3d force;
   Eigen::Vector3d torque;
   force << ft_data_.wrench.force.x, ft_data_.wrench.force.y,
@@ -142,7 +142,7 @@ void LoadShareEstimator::setObjectMass(double object_mass) {
   ft_calibration_.force_bias = bias_correction;
 }
 
-bool LoadShareEstimator::subscribe_robot_state() {
+bool LoadShareEstimator::subscribeRobotState() {
 
   ROS_WARN("Implement this.");
 
