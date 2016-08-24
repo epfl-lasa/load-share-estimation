@@ -1,0 +1,3 @@
+- git:
+    local-name: sg_differentiation
+    uri: https://github.com/epfl-lasa/sg_differentiation.git
