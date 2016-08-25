@@ -3,7 +3,7 @@
 
 int main(int argc, char **argv) {
   ros::init(argc, argv, "boilerplate_cpp");
-  ros::NodeHandle nodeHandle;
+  ros::NodeHandle nodeHandle("load_share_est");
 
   LoadShareEstimator worker(&nodeHandle);
   if (!worker.init()) {
