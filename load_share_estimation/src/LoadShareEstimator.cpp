@@ -1,5 +1,6 @@
 #include <ros/ros.h>
-#include <std_msgs/Int32.h>
+#include <std_msgs/Float64.h>
+#include <geometry_msgs/WrenchStamped.h>
 
 #include <load_share_estimation/LoadShareEstimator.h>
 #include <control_toolbox/filters.h>
@@ -15,6 +16,8 @@ LoadShareEstimator::LoadShareEstimator(ros::NodeHandle *nodeHandle)
   ft_calibration_.orientation.setIdentity();
   ft_calibration_.force_bias.setZero();
   ft_calibration_.torque_bias.setZero();
+
+  initPublishers();
 }
 
 bool LoadShareEstimator::init() {
@@ -37,6 +40,10 @@ bool LoadShareEstimator::init() {
     ROS_ERROR("Did you run the calibration script?");  // TODO provide name.
     return false;
   }
+  // Note that you should 'update' the object mass *after* loading the f/t
+  // calibration data, since setObjectMass computes the f/t bias vector using
+  // the calibration frame information.
+  setObjectMass(masses_.object);
 
   while(!waitForTransforms()) {
     ROS_INFO_STREAM("Still waiting for transforms...");
@@ -71,7 +78,6 @@ bool LoadShareEstimator::loadCalibration() {
 
 bool LoadShareEstimator::subscribeFTSensor(
   const std::string ft_topic, double ft_delay_time) {
-
 
   ft_sub.reset(new message_filters::Subscriber<geometry_msgs::WrenchStamped>(
     *nodeHandle_, ft_topic, 1, ros::TransportHints().reliable().tcpNoDelay()));
@@ -117,28 +123,28 @@ void LoadShareEstimator::computeSmoothedFTInWorldFrame() {
 
 void LoadShareEstimator::setObjectMass(double object_mass) {
 
-  Eigen::Matrix<double,3,3> mass_object_hand;
-  Eigen::Vector3d m_object_g, m_hand_ft_sensor_g, m_joint_g, f_dyn, f_obs, f_obs_dyn, f_int;
-
-
   masses_.object = object_mass;
 
-  m_object_g << 0, 0, -9.81 * masses_.object;
+  // Force due to gravity acting on the object only.
+  const double gravity = 9.81;
+  expected_forces_.gravity_object << 0, 0, -gravity * masses_.object;
 
   const double joint_mass = masses_.tool + masses_.ft_plate + masses_.object;
-  mass_object_hand.setZero();
-  mass_object_hand.diagonal() << joint_mass, joint_mass, joint_mass;
+  expected_forces_.mass_matrix_joint.setZero();
+  expected_forces_.mass_matrix_joint.diagonal() << joint_mass, joint_mass, joint_mass;
 
-  m_hand_ft_sensor_g << 0, 0, -9.81 * (masses_.tool + masses_.ft_plate);
-  m_joint_g << 0, 0, -9.81 * (joint_mass);
+  const double tool_sensor_mass = masses_.tool + masses_.ft_plate;
+  expected_forces_.gravity_tool_sensor << 0, 0, -gravity * tool_sensor_mass;
+  expected_forces_.gravity_all << 0, 0, -gravity * (joint_mass);
 
   // Compute the force correction term by expressing the expected force in the
   // calibration frame (when we measured the sensor bias).
   Eigen::Matrix3d rotation_world_to_orient_at_calibration;
   rotation_world_to_orient_at_calibration =
-      ft_calibration_.orientation.toRotationMatrix();
+    ft_calibration_.orientation.toRotationMatrix();
   Eigen::Vector3d bias_correction =
-      rotation_world_to_orient_at_calibration * m_hand_ft_sensor_g;
+    rotation_world_to_orient_at_calibration *
+    expected_forces_.gravity_tool_sensor;
   ft_calibration_.force_bias = bias_correction;
 }
 
@@ -149,8 +155,71 @@ bool LoadShareEstimator::subscribeRobotState() {
   return true;
 }
 
-bool LoadShareEstimator::work() {
+bool LoadShareEstimator::work(bool do_publish /* = true */) {
+  updateTransforms();
+  computeSmoothedFTInWorldFrame();
+
+  // Expected forces due to object dynamics (acceleration).
+  current_forces_.dynamics_from_object = -(expected_forces_.mass_matrix_joint * end_effector_acceleration_);
+
+  // Forces due to motion + human (without gravity)
+  current_forces_.motion_no_gravity = force_cur_ - expected_forces_.gravity_all;
+
+  // Forces due to motion + human and force due to gravity of the object only
+  // (remove the effect of the sensor and hand).
+  current_forces_.motion_object_only = force_cur_ - expected_forces_.gravity_tool_sensor;
+
+  // Compute force decomposition
+  if (current_forces_.dynamics_from_object.norm() > 1e-1) {
+    // Dynamics force sharing.
+    load_share_.dynamics_load_share_cur = std::max(
+      std::min(current_forces_.motion_no_gravity.dot(current_forces_.dynamics_from_object) / current_forces_.dynamics_from_object.squaredNorm(), 1.0), 0.0);
+  }
+  else {
+    load_share_.dynamics_load_share_cur = 1.0;
+  }
+  load_share_.dynamics_load_share_cur = filters::exponentialSmoothing(load_share_.dynamics_load_share_cur, load_share_.dynamics_load_share_prev, 0.1);
+  load_share_.dynamics_load_share_prev = load_share_.dynamics_load_share_cur;
+
+  // Compute load share. If the object mass is zero, the magnitude of the
+  // expected force is also zero. So, we set the load share to 0.0.
+  const double norm_force_object = expected_forces_.gravity_object.squaredNorm();
+  if (norm_force_object > 1e-1) {
+    // Load force share.
+    load_share_.load_share_cur = std::max(std::min(
+      (current_forces_.motion_object_only - load_share_.dynamics_load_share_cur * current_forces_.dynamics_from_object).dot(expected_forces_.gravity_object) / norm_force_object,
+      1.0), 0.0);
+  } else {
+    load_share_.load_share_cur = 0.0;
+  }
+  load_share_.load_share_cur = filters::exponentialSmoothing(load_share_.load_share_cur, load_share_.load_share_prev, 0.1);
+  load_share_.load_share_prev = load_share_.load_share_cur;
+
+  // Internal force: the forces not due to motion (current_forces_.dynamics_from_object) or load sharing.
+  current_forces_.internal = current_forces_.motion_object_only - (load_share_.dynamics_load_share_cur * current_forces_.dynamics_from_object) - (expected_forces_.gravity_object * load_share_.load_share_cur);
+
+  if (do_publish) {
+    publish();
+  }
+
   return true;
+}
+
+void LoadShareEstimator::publish() {
+  std_msgs::Float64 msg_load_share;
+  msg_load_share.data = load_share_.load_share_cur;
+  publishers_.load_share.publish(msg_load_share);
+
+  std_msgs::Float64 msg_dynamics_load_share;
+  msg_dynamics_load_share.data = load_share_.dynamics_load_share_cur;
+  publishers_.dynamics_load_share.publish(msg_dynamics_load_share);
+
+  geometry_msgs::WrenchStamped msg_internal_wrench;
+  msg_internal_wrench.header.stamp = ros::Time::now();
+  msg_internal_wrench.wrench.force.x = current_forces_.internal(0);
+  msg_internal_wrench.wrench.force.y = current_forces_.internal(1);
+  msg_internal_wrench.wrench.force.z = current_forces_.internal(2);
+  publishers_.internal_wrench.publish(msg_internal_wrench);
 }
 
 bool LoadShareEstimator::waitForTransforms() {
@@ -199,4 +268,15 @@ void LoadShareEstimator::updateTransforms() {
     ROS_ERROR("TF exception: %s", ex.what());
     ros::Duration(1.0).sleep();
   }
+}
+
+bool LoadShareEstimator::initPublishers() {
+  publishers_.load_share =
+    nodeHandle_->advertise<std_msgs::Float64>("load_share", 10);
+  publishers_.dynamics_load_share =
+    nodeHandle_->advertise<std_msgs::Float64>("dynamics_load_share", 10);
+  publishers_.internal_wrench =
+    nodeHandle_->advertise<geometry_msgs::WrenchStamped>("internal_wrench", 10);
+
+  return true;
 }

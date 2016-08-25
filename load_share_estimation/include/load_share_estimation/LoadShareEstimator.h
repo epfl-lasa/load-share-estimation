@@ -23,7 +23,11 @@ class LoadShareEstimator {
   bool subscribeFTSensor(const std::string ft_topic, double ft_delay_time);
   bool subscribeRobotState();
 
-  bool work();
+  bool initPublishers();
+
+  bool work(bool publish=true);
+
+  void publish();
 
   void computeSmoothedFTInWorldFrame();
 
@@ -67,6 +71,41 @@ class LoadShareEstimator {
   };
   masses_t masses_;
 
+  struct expected_forces_t {
+    // Force due to gravity acting on the object only.
+    Eigen::Vector3d gravity_object;
+
+    // Force due to gravity acting on the tool and sensor only (no object).
+    Eigen::Vector3d gravity_tool_sensor;
+
+    // Force due to gravity acting on the tool, sensor, and object (everything).
+    Eigen::Vector3d gravity_all;
+
+    // Diagonal matrix with the joint mass. This isn't a force. Sue us.
+    Eigen::Matrix<double,3,3> mass_matrix_joint;
+  };
+  expected_forces_t expected_forces_;
+
+  struct current_forces_t {
+
+    Eigen::Vector3d dynamics_from_object;  // f_dyn
+    Eigen::Vector3d motion_no_gravity;  // f_obs_dyn
+    Eigen::Vector3d motion_object_only;  // f_obs
+    Eigen::Vector3d internal;  // f_int
+  };
+  current_forces_t current_forces_;
+
+  // All the publishers: the load share is the primary thing we care about, but
+  // we also publish the load share estimate due to dynamics, and the internal
+  // wrench (the counteracting forces between the human and the robot that are
+  // unnecessary to accomplish the task).
+  struct publishers_t {
+    ros::Publisher load_share;
+    ros::Publisher dynamics_load_share;
+    ros::Publisher internal_wrench;
+  };
+  publishers_t publishers_;
+
   // The force/torque sensor and the robot root expressed in the world frame.
   tf::TransformListener tf_listener_ft_sensor_;
   tf::StampedTransform tf_ft_sensor_;
@@ -75,9 +114,18 @@ class LoadShareEstimator {
 
   bool waitForTransforms();
   void updateTransforms();
-
-
   void setObjectMass(double object_mass);
+
+  struct load_share_t {
+    double load_share_cur;
+    double load_share_prev;
+    double dynamics_load_share_cur;
+    double dynamics_load_share_prev;
+  };
+  load_share_t load_share_;
+
+  // TODO Update this variable.
+  Eigen::Vector3d end_effector_acceleration_;
 
 };
 
