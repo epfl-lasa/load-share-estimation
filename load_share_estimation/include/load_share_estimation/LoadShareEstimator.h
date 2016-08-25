@@ -6,6 +6,7 @@
 #include <Eigen/Geometry>
 
 #include <geometry_msgs/WrenchStamped.h>
+#include <geometry_msgs/Accel.h>
 
 #include <message_filters/subscriber.h>
 #include <message_filters/time_sequencer.h>
@@ -20,8 +21,8 @@ class LoadShareEstimator {
   bool init();
 
   bool loadCalibration();
-  bool subscribeFTSensor(const std::string ft_topic, double ft_delay_time);
-  bool subscribeRobotState();
+  bool subscribeFTSensor(const std::string &ft_topic, double ft_delay_time);
+  bool subscribeRobotState(const std::string &robot_accel_topic);
 
   bool initPublishers();
 
@@ -30,8 +31,9 @@ class LoadShareEstimator {
   void publish();
 
   void computeSmoothedFTInWorldFrame();
+  void computeEEAccelerationInWorldFrame();
 
- protected:
+protected:
   ros::NodeHandle *nodeHandle_;
 
   // Subscriber & filter for the force/torque data.
@@ -103,6 +105,11 @@ class LoadShareEstimator {
     ros::Publisher load_share;
     ros::Publisher dynamics_load_share;
     ros::Publisher internal_wrench;
+
+    // Debugging publishers
+    ros::Publisher measured_force_world_cur;  // force in world frame.
+    ros::Publisher dynamics_from_object_expected;
+    ros::Publisher dynamics_from_object_observed;
   };
   publishers_t publishers_;
 
@@ -111,6 +118,10 @@ class LoadShareEstimator {
   tf::StampedTransform tf_ft_sensor_;
   tf::TransformListener tf_listener_robot_;
   tf::StampedTransform tf_robot_root_;
+
+  ros::Subscriber robot_ee_acceleration_sub_;
+  Eigen::Vector3d robot_ee_acceleration_cur_;
+  void callback_ee_accel(const geometry_msgs::Accel::ConstPtr &msg);
 
   bool waitForTransforms();
   void updateTransforms();
@@ -124,8 +135,8 @@ class LoadShareEstimator {
   };
   load_share_t load_share_;
 
-  // TODO Update this variable.
-  Eigen::Vector3d end_effector_acceleration_;
+  Eigen::Vector3d robot_ee_accel_;
+  geometry_msgs::Accel latest_ee_acceleration_;
 
 };
 

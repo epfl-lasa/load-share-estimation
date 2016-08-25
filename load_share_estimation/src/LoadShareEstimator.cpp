@@ -1,11 +1,13 @@
 #include <ros/ros.h>
 #include <std_msgs/Float64.h>
 #include <geometry_msgs/WrenchStamped.h>
+#include <geometry_msgs/Accel.h>
 
 #include <load_share_estimation/LoadShareEstimator.h>
 #include <control_toolbox/filters.h>
 #include <tf/tf.h>
 #include <tf_conversions/tf_eigen.h>
+#include <eigen_conversions/eigen_msg.h>
 
 
 LoadShareEstimator::LoadShareEstimator(ros::NodeHandle *nodeHandle)
@@ -24,16 +26,15 @@ bool LoadShareEstimator::init() {
   ROS_INFO_STREAM("Load Share Estimator initialization starting...");
 
   const std::string topic_load_share = "load_share";
-  const std::string topic_ft_sensor = "ft_sensor";
-  const std::string topic_ee_state = "ee_state";
+  const std::string topic_ft_sensor = "/ft_sensor/netft_data";
+  const std::string topic_robot_ee_accel = "/lwr/ee_accel";
   const double ft_delay = 0.01;
 
   // TODO Get these from yaml parameters.
 
-  masses_.object = 1.0;
-  masses_.tool = 1.0;
-  masses_.ft_plate = 1.0;
-
+  masses_.object = 0.556;
+  masses_.tool = 1.453;
+  masses_.ft_plate = 0.112;
 
   if(!loadCalibration()) {
     ROS_ERROR("Could not load f/t sensor calibration information.");
@@ -53,7 +54,7 @@ bool LoadShareEstimator::init() {
   if(!subscribeFTSensor(topic_ft_sensor, ft_delay))
     return false;
 
-  if(!subscribeRobotState())
+  if(!subscribeRobotState(topic_robot_ee_accel))
     return false;
 
   ROS_INFO_STREAM("Load Share Estimator initialization SUCCESS!");
@@ -63,8 +64,10 @@ bool LoadShareEstimator::init() {
 bool LoadShareEstimator::loadCalibration() {
 
   std::vector<double> lwr_ft_calib_orientation_list;
-  if (!nodeHandle_->getParam("/lwr_ft_calib_orientation",
-                             lwr_ft_calib_orientation_list)) {
+  const std::string param_name = "calib_orientation";
+  if (!nodeHandle_->getParam(param_name, lwr_ft_calib_orientation_list)) {
+    ROS_WARN_STREAM("Could not get calibration from param server: "
+                    << param_name);
     return false;
   }
 
@@ -73,11 +76,16 @@ bool LoadShareEstimator::loadCalibration() {
   ft_calibration_.orientation.z() = lwr_ft_calib_orientation_list.at(2);
   ft_calibration_.orientation.w() = lwr_ft_calib_orientation_list.at(3);
 
+  ROS_INFO_STREAM("Got orientation at calibration: ["
+                  << ft_calibration_.orientation.x() << ", "
+                  << ft_calibration_.orientation.y() << ", "
+                  << ft_calibration_.orientation.z() << ", "
+                  << ft_calibration_.orientation.w() << "]");
   return true;
 }
 
 bool LoadShareEstimator::subscribeFTSensor(
-  const std::string ft_topic, double ft_delay_time) {
+  const std::string &ft_topic, double ft_delay_time) {
 
   ft_sub.reset(new message_filters::Subscriber<geometry_msgs::WrenchStamped>(
     *nodeHandle_, ft_topic, 1, ros::TransportHints().reliable().tcpNoDelay()));
@@ -85,12 +93,15 @@ bool LoadShareEstimator::subscribeFTSensor(
     *ft_sub, ros::Duration(ft_delay_time), ros::Duration(0.0001), 10000));
   ft_filter->registerCallback(
     boost::bind(&LoadShareEstimator::callback_ft_sensor_filtered, this, _1));
+
+  ROS_INFO_STREAM("Subscribed to f/t data (with a delay of " << ft_delay_time
+                  << ") on topic: " <<  ft_topic);
+
   return true;
 }
 
 void LoadShareEstimator::callback_ft_sensor_filtered(
   const geometry_msgs::WrenchStamped::ConstPtr &msg) {
-
   ft_data_ = *msg;
 }
 
@@ -148,19 +159,44 @@ void LoadShareEstimator::setObjectMass(double object_mass) {
   ft_calibration_.force_bias = bias_correction;
 }
 
-bool LoadShareEstimator::subscribeRobotState() {
+bool LoadShareEstimator::subscribeRobotState(
+  const std::string &robot_accel_topic) {
 
   ROS_WARN("Implement this.");
+  robot_ee_acceleration_sub_ = nodeHandle_->subscribe(
+    robot_accel_topic, 1,  &LoadShareEstimator::callback_ee_accel, this,
+    ros::TransportHints().reliable().tcpNoDelay());
 
   return true;
 }
 
+void LoadShareEstimator::callback_ee_accel(const geometry_msgs::Accel::ConstPtr &msg) {
+  latest_ee_acceleration_ = *msg;
+}
+
+void LoadShareEstimator::computeEEAccelerationInWorldFrame() {
+
+  // The acceleration messages are expressed in the robot root.
+  Eigen::Vector3d ee_accel_robot_root;
+  ee_accel_robot_root << latest_ee_acceleration_.linear.x,
+    latest_ee_acceleration_.linear.y,
+    latest_ee_acceleration_.linear.z;
+
+  // So, transform the acceleration into the world frame.
+  Eigen::Matrix3d rot;
+  tf::matrixTFToEigen(tf_robot_root_.getBasis(), rot);
+  robot_ee_accel_ = rot*ee_accel_robot_root;
+}
+
 bool LoadShareEstimator::work(bool do_publish /* = true */) {
-  updateTransforms();
+  updateTransforms();  // NOTE: This should happen first.
   computeSmoothedFTInWorldFrame();
+  computeEEAccelerationInWorldFrame();
+
+  ROS_INFO_STREAM_THROTTLE(1.0, "Current forces (smoothed): " << force_cur_);
 
   // Expected forces due to object dynamics (acceleration).
-  current_forces_.dynamics_from_object = -(expected_forces_.mass_matrix_joint * end_effector_acceleration_);
+  current_forces_.dynamics_from_object = -(expected_forces_.mass_matrix_joint * robot_ee_accel_);
 
   // Forces due to motion + human (without gravity)
   current_forces_.motion_no_gravity = force_cur_ - expected_forces_.gravity_all;
@@ -216,10 +252,30 @@ void LoadShareEstimator::publish() {
 
   geometry_msgs::WrenchStamped msg_internal_wrench;
   msg_internal_wrench.header.stamp = ros::Time::now();
-  msg_internal_wrench.wrench.force.x = current_forces_.internal(0);
-  msg_internal_wrench.wrench.force.y = current_forces_.internal(1);
-  msg_internal_wrench.wrench.force.z = current_forces_.internal(2);
+  tf::vectorEigenToMsg(current_forces_.internal,
+                       msg_internal_wrench.wrench.force);
   publishers_.internal_wrench.publish(msg_internal_wrench);
+
+  // Debugging publishers.
+  geometry_msgs::WrenchStamped measured_force_world;
+  measured_force_world.header.stamp = ros::Time::now();
+  tf::vectorEigenToMsg(force_cur_, measured_force_world.wrench.force);
+  publishers_.measured_force_world_cur.publish(measured_force_world);
+
+  geometry_msgs::WrenchStamped dynamics_from_object_expected;
+  dynamics_from_object_expected.header.stamp = ros::Time::now();
+  tf::vectorEigenToMsg(current_forces_.dynamics_from_object,
+                       dynamics_from_object_expected.wrench.force);
+  publishers_.dynamics_from_object_expected.publish(
+    dynamics_from_object_expected);
+
+
+  geometry_msgs::WrenchStamped dynamics_from_object_observed;
+  dynamics_from_object_observed.header.stamp = ros::Time::now();
+  tf::vectorEigenToMsg(current_forces_.motion_no_gravity,
+                       dynamics_from_object_observed.wrench.force);
+  publishers_.dynamics_from_object_observed.publish(
+    dynamics_from_object_observed);
 }
 
 bool LoadShareEstimator::waitForTransforms() {
@@ -277,6 +333,14 @@ bool LoadShareEstimator::initPublishers() {
     nodeHandle_->advertise<std_msgs::Float64>("dynamics_load_share", 10);
   publishers_.internal_wrench =
     nodeHandle_->advertise<geometry_msgs::WrenchStamped>("internal_wrench", 10);
+
+
+  publishers_.measured_force_world_cur =
+    nodeHandle_->advertise<geometry_msgs::WrenchStamped>("debug/measured_force_world", 10);
+  publishers_.dynamics_from_object_expected =
+    nodeHandle_->advertise<geometry_msgs::WrenchStamped>("debug/dynamics_from_object_expected", 10);
+  publishers_.dynamics_from_object_observed =
+    nodeHandle_->advertise<geometry_msgs::WrenchStamped>("debug/dynamics_from_object_observed", 10);
 
   return true;
 }
