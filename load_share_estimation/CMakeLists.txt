@@ -12,6 +12,10 @@ macro(use_cxx11)
 endmacro(use_cxx11)
 use_cxx11()
 
+# Turn on all compiler warnings.
+set (CMAKE_CXX_FLAGS "-Wall ${CMAKE_CXX_FLAGS}")
+
+
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
