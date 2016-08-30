@@ -1,5 +1,6 @@
 #include <ros/ros.h>
 #include <load_share_estimation/LoadShareEstimator.h>
+#include <load_share_estimation/LoadShareParameters.h>
 
 int main(int argc, char **argv) {
   ros::init(argc, argv, "load_share_estimator");
@@ -8,8 +9,15 @@ int main(int argc, char **argv) {
   // together.
   ros::NodeHandle nodeHandle("load_share_estimator");
 
+  load_share_estimation::LoadShareParameters params;
+  if(!params.fromParamServer()) {
+    ROS_ERROR("Could not load parameters from param server.");
+    ROS_ERROR("Exiting.");
+    return -1;
+  }
+
   LoadShareEstimator worker(&nodeHandle);
-  if (!worker.init()) {
+  if (!worker.init(params)) {
     ROS_ERROR("Error initializing node.");
     return -1;
   }

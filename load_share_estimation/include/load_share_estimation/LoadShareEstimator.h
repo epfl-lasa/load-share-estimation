@@ -14,11 +14,14 @@
 #include <tf/tf.h>
 #include <tf/transform_listener.h>
 
+#include <load_share_estimation/LoadShareParameters.h>
+
+
 class LoadShareEstimator {
  public:
   LoadShareEstimator(ros::NodeHandle *nodeHandle);
 
-  bool init();
+  bool init(const load_share_estimation::LoadShareParameters &parameters);
 
   bool loadCalibration();
   bool subscribeFTSensor(const std::string &ft_topic, double ft_delay_time);

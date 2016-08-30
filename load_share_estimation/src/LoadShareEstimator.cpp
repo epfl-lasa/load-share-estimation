@@ -4,11 +4,14 @@
 #include <geometry_msgs/Accel.h>
 
 #include <load_share_estimation/LoadShareEstimator.h>
+#include <load_share_estimation/LoadShareParameters.h>
 #include <control_toolbox/filters.h>
 #include <tf/tf.h>
 #include <tf_conversions/tf_eigen.h>
 #include <eigen_conversions/eigen_msg.h>
 
+
+using namespace load_share_estimation;
 
 LoadShareEstimator::LoadShareEstimator(ros::NodeHandle *nodeHandle)
     : nodeHandle_(nodeHandle),
@@ -22,7 +25,7 @@ LoadShareEstimator::LoadShareEstimator(ros::NodeHandle *nodeHandle)
   initPublishers();
 }
 
-bool LoadShareEstimator::init() {
+bool LoadShareEstimator::init(const LoadShareParameters &parameters) {
   ROS_INFO_STREAM("Load Share Estimator initialization starting...");
 
   const std::string topic_load_share = "load_share";
