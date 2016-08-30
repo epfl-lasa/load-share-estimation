@@ -1,3 +1,26 @@
-asdf:
- - 1
- - 2
+# Topics to subscribe to.
+topics:
+  ft_sensor: '/ft_sensor/netft_data'
+  robot_ee_accel: '/lwr/ee_accel'
+
+# Name of the ROS parameter where the robot orientation *at calibration time*
+# was stored.
+calibration_orientation_param_name: '/lwr_orientation_at_calibration'
+
+# These are the TF frame names for the required pieces.
+frame_names:
+  world: /world
+  robot_root: /robot_root
+  ft_sensor: /ft_sensor
+
+# These are the masses of the various object parts.
+masses:
+  object: 0.514
+  tool: 1.453
+  ft_plate: 0.112
+
+
+filtering_params:
+  smoothing_load_share: 0.1
+  smoothing_force: 0.25
+  smoothing_torque: 0.25
