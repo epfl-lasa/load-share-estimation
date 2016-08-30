@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<launch>
+
+  <!-- You must specify the calibration file where the TF is stored. -->
+  <arg name="config" />
+
+  <rosparam param="load_share_estimation"
+            file="$(arg config)" />
+
+  <!--
+      Launch the grasp object and calibration routine.
+  -->
+</launch>
