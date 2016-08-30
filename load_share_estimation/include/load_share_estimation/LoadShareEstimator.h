@@ -16,6 +16,7 @@
 
 #include <load_share_estimation/LoadShareParameters.h>
 
+namespace load_share_estimation {
 
 class LoadShareEstimator {
  public:
@@ -142,5 +143,7 @@ protected:
   geometry_msgs::Accel latest_ee_acceleration_;
 
 };
+
+}   // namespace load_share_estimation
 
 #endif  // __LOAD_SHARE_ESTIMATOR__

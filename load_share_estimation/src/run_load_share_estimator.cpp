@@ -16,7 +16,7 @@ int main(int argc, char **argv) {
     return -1;
   }
 
-  LoadShareEstimator worker(&nodeHandle);
+  load_share_estimation::LoadShareEstimator worker(&nodeHandle);
   if (!worker.init(params)) {
     ROS_ERROR("Error initializing node.");
     return -1;
