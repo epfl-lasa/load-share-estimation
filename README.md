@@ -14,3 +14,6 @@ SG filter for acceleration:
 he experimentally-determined mass of the f/t sensor plate
 To find it again, calibrate with the plate down, flip the sensor so the plate is up, and solve for:
 -2 * m * g = F_z
+
+
+Calibration: zeros out the f/t readings.
