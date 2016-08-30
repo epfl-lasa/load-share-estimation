@@ -1,13 +1,19 @@
 <?xml version="1.0" ?>
 <launch>
+  <!-- Convenience launcher for the load share estimation node. -->
 
-  <!-- You must specify the calibration file where the TF is stored. -->
+  <!-- The only required argument is the path to the configuration file (the
+       file gets loaded into the parameter server). -->
   <arg name="config" />
 
+  <!--
+      Load the parameters & launch the load share estimator.
+  -->
   <rosparam param="load_share_estimation"
             file="$(arg config)" />
-
-  <!--
-      Launch the grasp object and calibration routine.
-  -->
+  <node name="load_share_estimator"
+        pkg="load_share_estimation"
+        type="load_share_estimation_node"
+        output="screen"
+        />
 </launch>
