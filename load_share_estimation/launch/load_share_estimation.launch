@@ -15,5 +15,6 @@
         pkg="load_share_estimation"
         type="load_share_estimation_node"
         output="screen"
+        required="true"
         />
 </launch>
