@@ -32,7 +32,7 @@ bool LoadShareEstimator::init() {
 
   // TODO Get these from yaml parameters.
 
-  masses_.object = 0.556;
+  masses_.object = 0.514;
   masses_.tool = 1.453;
   masses_.ft_plate = 0.112;
 
@@ -64,7 +64,7 @@ bool LoadShareEstimator::init() {
 bool LoadShareEstimator::loadCalibration() {
 
   std::vector<double> lwr_ft_calib_orientation_list;
-  const std::string param_name = "calib_orientation";
+  const std::string param_name = "/lwr_orientation_at_calibration";
   if (!nodeHandle_->getParam(param_name, lwr_ft_calib_orientation_list)) {
     ROS_WARN_STREAM("Could not get calibration from param server: "
                     << param_name);
@@ -193,8 +193,6 @@ bool LoadShareEstimator::work(bool do_publish /* = true */) {
   computeSmoothedFTInWorldFrame();
   computeEEAccelerationInWorldFrame();
 
-  ROS_INFO_STREAM_THROTTLE(1.0, "Current forces (smoothed): " << force_cur_);
-
   // Expected forces due to object dynamics (acceleration).
   current_forces_.dynamics_from_object = -(expected_forces_.mass_matrix_joint * robot_ee_accel_);
 
@@ -294,7 +292,7 @@ bool LoadShareEstimator::waitForTransforms() {
   bool tf_ready_robot = false;
   try {
     tf_ready_robot = tf_listener_robot_.waitForTransform(
-      "/world", "/palm_link", ros::Time(0), ros::Duration(3.0));
+      "/world", "/robot_root", ros::Time(0), ros::Duration(3.0));
     if (!tf_ready_robot) {
       ROS_INFO_STREAM("Still waiting for /palm_link transform... ");
     }
