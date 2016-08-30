@@ -21,7 +21,6 @@ set (CMAKE_CXX_FLAGS "-Wall ${CMAKE_CXX_FLAGS}")
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   eigen_conversions
-  sg_differentiation
   std_msgs
   geometry_msgs
   tf_conversions
