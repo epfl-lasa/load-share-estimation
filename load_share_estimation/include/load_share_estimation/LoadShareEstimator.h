@@ -40,6 +40,8 @@ class LoadShareEstimator {
 protected:
   ros::NodeHandle *nodeHandle_;
 
+  load_share_estimation::LoadShareParameters parameters_;
+
   // Subscriber & filter for the force/torque data.
   std::unique_ptr<
     message_filters::Subscriber<geometry_msgs::WrenchStamped> > ft_sub;

@@ -196,11 +196,14 @@ add_dependencies(load_share_estimation_node
 ## Testing ##
 #############
 
-## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_load_share_estimation.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
-
-## Add folders to be run by python nosetests
-# catkin_add_nosetests(test)
+if (CATKIN_ENABLE_TESTING)
+  catkin_add_gtest(${PROJECT_NAME}_test
+        src/test/TestParameters)
+  add_dependencies(${PROJECT_NAME}_test
+      ${${PROJECT_NAME}_EXPORTED_TARGETS}
+      ${catkin_EXPORTED_TARGETS})
+  target_link_libraries(${PROJECT_NAME}_test
+          load_share_estimation
+      ${catkin_LIBRARIES}
+      )
+endif ()
