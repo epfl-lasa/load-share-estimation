@@ -7,11 +7,10 @@ topics:
 # was stored.
 calibration_orientation_param_name: '/lwr_orientation_at_calibration'
 
-# These are the TF frame names for the required pieces.
+# These are the TF frame names for the f/t sensor and robot root.
 frame_names:
-  world: /world
-  robot_root: /robot_root
   ft_sensor: /ft_sensor
+  robot_root: /robot_root
 
 # These are the masses of the various object parts.
 masses:

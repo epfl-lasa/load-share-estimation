@@ -63,6 +63,13 @@ class LoadShareParameters {
                        topic_in_robot_ee_accel))
       return false;
 
+    // TF frame names
+    if (!getParamString(nodeHandle, "frame_names/ft_sensor",
+                       tf_name_ft_sensor))
+      return false;
+    if (!getParamString(nodeHandle, "frame_names/robot_root",
+                       tf_name_robot_root))
+      return false;
 
     return true;
   }
@@ -80,6 +87,10 @@ class LoadShareParameters {
     ROS_INFO_STREAM("   Robot acceleration (in): " << topic_in_robot_ee_accel);
     ROS_INFO_STREAM("Parameter for calibration orientation: "
                     << param_name_calibration_orientation);
+
+    ROS_INFO_STREAM("TF frame names:");
+    ROS_INFO_STREAM("   Force/torque sensor: " << tf_name_ft_sensor);
+    ROS_INFO_STREAM("   Robot root: " << tf_name_robot_root);
 
     ROS_INFO_STREAM("Filtering parameters");
     ROS_INFO_STREAM("   Smoothing, load share: " << smoothing_load_share);
@@ -102,6 +113,11 @@ class LoadShareParameters {
   std::string topic_in_ft_sensor;
   std::string topic_in_robot_ee_accel;
 
+  std::string tf_name_ft_sensor;
+  std::string tf_name_robot_root;
+
+  // Additional delay we add to force/torque data to match the robot
+  // acceleration information.
   double ft_delay;
 
   // Filtering parameters.

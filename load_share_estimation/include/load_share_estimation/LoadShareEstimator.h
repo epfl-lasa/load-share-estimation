@@ -120,11 +120,15 @@ protected:
   };
   publishers_t publishers_;
 
-  // The force/torque sensor and the robot root expressed in the world frame.
+  // All transform stuff: we need a TF for the force/torque sensor, and one for
+  // the robot root. Note the TF names can be set as configuration parameters.
   tf::TransformListener tf_listener_ft_sensor_;
   tf::StampedTransform tf_ft_sensor_;
+  std::string tf_name_ft_sensor_;
+
   tf::TransformListener tf_listener_robot_;
   tf::StampedTransform tf_robot_root_;
+  std::string tf_name_robot_root_;
 
   ros::Subscriber robot_ee_acceleration_sub_;
   Eigen::Vector3d robot_ee_acceleration_cur_;

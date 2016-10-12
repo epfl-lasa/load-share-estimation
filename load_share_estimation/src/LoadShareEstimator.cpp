@@ -28,10 +28,6 @@ LoadShareEstimator::LoadShareEstimator(ros::NodeHandle *nodeHandle)
 bool LoadShareEstimator::init(const LoadShareParameters &parameters) {
   ROS_INFO_STREAM("Load Share Estimator initialization starting...");
 
-  const std::string topic_ft_sensor = parameters.topic_in_ft_sensor;
-  const std::string topic_robot_ee_accel = parameters.topic_in_robot_ee_accel;
-  const double ft_delay = parameters.ft_delay;
-
   masses_.object = parameters.object_mass;
   masses_.tool = parameters.tool_mass;
   masses_.ft_plate = parameters.ft_plate_mass;
@@ -51,15 +47,17 @@ bool LoadShareEstimator::init(const LoadShareParameters &parameters) {
   // the calibration frame information.
   setObjectMass(masses_.object);
 
+  tf_name_ft_sensor_ = parameters.tf_name_ft_sensor;
+  tf_name_robot_root_ = parameters.tf_name_robot_root;
   while(!waitForTransforms()) {
     ROS_INFO_STREAM("Still waiting for transforms...");
     ros::Duration(1.0).sleep();
   }
 
-  if(!subscribeFTSensor(topic_ft_sensor, ft_delay))
+  if(!subscribeFTSensor(parameters.topic_in_ft_sensor, parameters.ft_delay))
     return false;
 
-  if(!subscribeRobotState(topic_robot_ee_accel))
+  if(!subscribeRobotState(parameters.topic_in_robot_ee_accel))
     return false;
 
   ROS_INFO_STREAM("Load Share Estimator initialization SUCCESS!");
@@ -286,7 +284,7 @@ bool LoadShareEstimator::waitForTransforms() {
   bool tf_ready_sensor = false;
   try {
     tf_ready_sensor = tf_listener_ft_sensor_.waitForTransform(
-      "/world", "/ft_sensor", ros::Time(0), ros::Duration(3.0));
+      "/world", tf_name_ft_sensor_, ros::Time(0), ros::Duration(3.0));
     if (!tf_ready_sensor) {
       ROS_INFO_STREAM("Still waiting for ft_sensor transform... ");
     }
@@ -298,7 +296,7 @@ bool LoadShareEstimator::waitForTransforms() {
   bool tf_ready_robot = false;
   try {
     tf_ready_robot = tf_listener_robot_.waitForTransform(
-      "/world", "/robot_root", ros::Time(0), ros::Duration(3.0));
+      "/world", tf_name_robot_root_, ros::Time(0), ros::Duration(3.0));
     if (!tf_ready_robot) {
       ROS_INFO_STREAM("Still waiting for /palm_link transform... ");
     }
@@ -314,7 +312,7 @@ bool LoadShareEstimator::waitForTransforms() {
 void LoadShareEstimator::updateTransforms() {
   try{
     tf_listener_ft_sensor_.lookupTransform(
-      "/world", "/ft_sensor", ros::Time(0), tf_ft_sensor_);
+      "/world", tf_name_ft_sensor_, ros::Time(0), tf_ft_sensor_);
   } catch (tf::TransformException ex) {
     ROS_ERROR("TF exception: %s", ex.what());
     ros::Duration(1.0).sleep();
@@ -322,7 +320,7 @@ void LoadShareEstimator::updateTransforms() {
 
   try {
     tf_listener_robot_.lookupTransform(
-      "/world", "/robot_root", ros::Time(0), tf_robot_root_);
+      "/world", tf_name_robot_root_, ros::Time(0), tf_robot_root_);
   }
   catch (tf::TransformException ex) {
     ROS_ERROR("TF exception: %s", ex.what());
