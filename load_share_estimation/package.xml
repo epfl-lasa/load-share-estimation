@@ -2,7 +2,8 @@
 <package>
   <name>load_share_estimation</name>
   <version>0.0.0</version>
-  <description>Dynamically estimate the load share using force/torque sensor data</description>
+  <description>Estimate the load share of an object supported by the robot
+  (accounting for dynamics), using force/torque sensor data.</description>
 
   <maintainer email="felixd@gmail.com">Felix Duvallet</maintainer>
   <author email="felixd@gmail.com">Felix Duvallet</author>
