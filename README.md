@@ -25,18 +25,23 @@ We must know the following component masses:
  - The mass of the force/torque sensor plate (in kg), which is the part that's not bolted on the arm.
 
 Note: the f/t sensor plate mass is a little tricky to estimate.
-We determined it experimentally by zero-ing the sensor with the plate hanging freely down, then flipping the sensor so the plate is up (all forces should be along the z-axis).
+We determined it experimentally by zero-ing the sensor with the plate hanging
+freely down, then flipping the sensor so the plate is up (all forces should be
+along the z-axis).
 Then, the mass of the plate (m_plate) will be given by the force in the z-axis (F_z):
 
     -2 * m_plate * g = F_z
 
+The node computes the **wrenches expressed in the world frame**.
+For this, we need access to the following pieces of information:
 
+  - The force/torque sensor data.
+  - The end-effector acceleration.
+  - The sensor's pose (as a `tf`).
+  - The robot root's pose (as a `tf) in the world frame.
 
-During execution, we need to subscribe to the force/torque sensor data, and we
-must have access to the sensor's pose (using a `tf` transform).
-
-We must also know the acceleration of the robot's end-effector, and the robot
-root (as a `tf`) in the world frame so that we can express the forces in the .
+The acceleration (along with information about the hand/object) enables us to compute the effect of the robot dynamic on the sensed forces (to remove the forces due to acceleration).
+The transforms enable us to express the forces in the world frame.
 
 ## Outputs
 
@@ -85,4 +90,3 @@ approximately zero.
 
  - load share filtering: We filter the computed load share in the exact same
    way, you can change the exponential smoother parameter.
-

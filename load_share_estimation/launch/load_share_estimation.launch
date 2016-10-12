@@ -5,16 +5,19 @@
   <!-- The only required argument is the path to the configuration file (the
        file gets loaded into the parameter server). -->
   <arg name="config" />
+  <arg name="namespace" default="load_share_estimation" />
 
   <!--
       Load the parameters & launch the load share estimator.
   -->
-  <rosparam param="load_share_estimation"
-            file="$(arg config)" />
-  <node name="load_share_estimator"
-        pkg="load_share_estimation"
-        type="load_share_estimation_node"
-        output="screen"
-        required="true"
-        />
+  <group ns="$(arg namespace)">
+    <rosparam param=""
+              file="$(arg config)" />
+    <node name="load_share_estimator"
+          pkg="load_share_estimation"
+          type="load_share_estimation_node"
+          output="screen"
+          required="true"
+          />
+  </group>
 </launch>

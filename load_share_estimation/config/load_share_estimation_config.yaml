@@ -2,6 +2,7 @@
 topics:
   ft_sensor: '/ft_sensor/netft_data'
   robot_ee_accel: '/lwr/ee_accel'
+  load_share: 'load_share'
 
 # Name of the ROS parameter where the robot orientation *at calibration time*
 # was stored.
@@ -19,6 +20,9 @@ masses:
   tool: 1.453
   ft_plate: 0.112
 
+# Incoming time delay to add to force/torque sensor data (so that it matches
+# with the filtered acceleration signal).
+ft_sensor_delay: 0.1
 
 filtering_params:
   smoothing_load_share: 0.1
