@@ -1,22 +1,26 @@
+#include <load_share_estimation/LoadShareEstimator.h>
+
+#include <control_toolbox/filters.h>
+#include <eigen_conversions/eigen_msg.h>
+#include <geometry_msgs/Accel.h>
+#include <geometry_msgs/WrenchStamped.h>
 #include <ros/ros.h>
 #include <std_msgs/Float64.h>
-#include <geometry_msgs/WrenchStamped.h>
-#include <geometry_msgs/Accel.h>
-
-#include <load_share_estimation/LoadShareEstimator.h>
-#include <load_share_estimation/LoadShareParameters.h>
-#include <control_toolbox/filters.h>
 #include <tf/tf.h>
 #include <tf_conversions/tf_eigen.h>
-#include <eigen_conversions/eigen_msg.h>
 
+#include <load_share_estimation/LoadShareParameters.h>
 
-using namespace load_share_estimation;
+#include <string>
+#include <algorithm>
+#include <vector>
+
+using load_share_estimation::LoadShareEstimator;
 
 LoadShareEstimator::LoadShareEstimator(ros::NodeHandle *nodeHandle)
     : nodeHandle_(nodeHandle),
       tf_listener_ft_sensor_(),
-      tf_listener_robot_(){
+      tf_listener_robot_() {
 
   ft_calibration_.orientation.setIdentity();
   ft_calibration_.force_bias.setZero();
@@ -35,7 +39,7 @@ bool LoadShareEstimator::init(const LoadShareParameters &parameters) {
   smoothing_constant_torque_ = parameters.smoothing_torque;
   smoothing_constant_load_share_ = parameters.smoothing_load_share;
 
-  if(!loadCalibration(parameters.param_name_calibration_orientation)) {
+  if (!loadCalibration(parameters.param_name_calibration_orientation)) {
     ROS_ERROR("Could not load f/t sensor calibration information.");
     ROS_ERROR_STREAM("I looked for information in this parameter: " <<
                      parameters.param_name_calibration_orientation);
@@ -49,15 +53,15 @@ bool LoadShareEstimator::init(const LoadShareParameters &parameters) {
 
   tf_name_ft_sensor_ = parameters.tf_name_ft_sensor;
   tf_name_robot_root_ = parameters.tf_name_robot_root;
-  while(!waitForTransforms()) {
+  while (!waitForTransforms()) {
     ROS_INFO_STREAM("Still waiting for transforms...");
     ros::Duration(1.0).sleep();
   }
 
-  if(!subscribeFTSensor(parameters.topic_in_ft_sensor, parameters.ft_delay))
+  if (!subscribeFTSensor(parameters.topic_in_ft_sensor, parameters.ft_delay))
     return false;
 
-  if(!subscribeRobotState(parameters.topic_in_robot_ee_accel))
+  if (!subscribeRobotState(parameters.topic_in_robot_ee_accel))
     return false;
 
   ROS_INFO_STREAM("Load Share Estimator initialization SUCCESS!");
@@ -65,7 +69,6 @@ bool LoadShareEstimator::init(const LoadShareParameters &parameters) {
 }
 
 bool LoadShareEstimator::loadCalibration(const std::string &param_name) {
-
   std::vector<double> lwr_ft_calib_orientation_list;
   if (!nodeHandle_->getParam(param_name, lwr_ft_calib_orientation_list)) {
     ROS_WARN_STREAM("Could not get calibration from param server: "
@@ -86,12 +89,12 @@ bool LoadShareEstimator::loadCalibration(const std::string &param_name) {
   return true;
 }
 
-bool LoadShareEstimator::subscribeFTSensor(
-  const std::string &ft_topic, double ft_delay_time) {
-
+bool LoadShareEstimator::subscribeFTSensor(const std::string &ft_topic,
+                                           double ft_delay_time) {
   ft_sub.reset(new message_filters::Subscriber<geometry_msgs::WrenchStamped>(
     *nodeHandle_, ft_topic, 1, ros::TransportHints().reliable().tcpNoDelay()));
-  ft_filter.reset(new message_filters::TimeSequencer<geometry_msgs::WrenchStamped>(
+  ft_filter.reset(
+      new message_filters::TimeSequencer<geometry_msgs::WrenchStamped>(
     *ft_sub, ros::Duration(ft_delay_time), ros::Duration(0.0001), 10000));
   ft_filter->registerCallback(
     boost::bind(&LoadShareEstimator::callback_ft_sensor_filtered, this, _1));
@@ -108,7 +111,6 @@ void LoadShareEstimator::callback_ft_sensor_filtered(
 }
 
 void LoadShareEstimator::computeSmoothedFTInWorldFrame() {
-
   // NOTE: The f/t data is filtered; in our case this is a constant delay (using
   // the TimeSequencer) to better align the f/t data with the acceleration
   // estimate, which is also slightly delayed.
@@ -125,11 +127,11 @@ void LoadShareEstimator::computeSmoothedFTInWorldFrame() {
   Eigen::Vector3d force_world = rot*(force + ft_calibration_.force_bias);
   Eigen::Vector3d torque_world = rot*(torque + ft_calibration_.torque_bias);
 
-  for (size_t i=0 ; i < 3 ; i ++ ) {
-    force_cur_(i) = filters::exponentialSmoothing(force_world(i), force_prev_(i),
-                                                  smoothing_constant_force_);
-    torque_cur_(i) = filters::exponentialSmoothing(torque_world(i), torque_prev_(i),
-                                                   smoothing_constant_torque_);
+  for (size_t i=0 ; i < 3 ; ++i) {
+    force_cur_(i) = filters::exponentialSmoothing(
+        force_world(i), force_prev_(i), smoothing_constant_force_);
+    torque_cur_(i) = filters::exponentialSmoothing(
+        torque_world(i), torque_prev_(i), smoothing_constant_torque_);
   }
 
   force_prev_ = force_cur_;
@@ -137,7 +139,6 @@ void LoadShareEstimator::computeSmoothedFTInWorldFrame() {
 }
 
 void LoadShareEstimator::setObjectMass(double object_mass) {
-
   masses_.object = object_mass;
 
   // Force due to gravity acting on the object only.
@@ -146,7 +147,8 @@ void LoadShareEstimator::setObjectMass(double object_mass) {
 
   const double joint_mass = masses_.tool + masses_.ft_plate + masses_.object;
   expected_forces_.mass_matrix_joint.setZero();
-  expected_forces_.mass_matrix_joint.diagonal() << joint_mass, joint_mass, joint_mass;
+  expected_forces_.mass_matrix_joint.diagonal()
+      << joint_mass, joint_mass, joint_mass;
 
   const double tool_sensor_mass = masses_.tool + masses_.ft_plate;
   expected_forces_.gravity_tool_sensor << 0, 0, -gravity * tool_sensor_mass;
@@ -165,7 +167,6 @@ void LoadShareEstimator::setObjectMass(double object_mass) {
 
 bool LoadShareEstimator::subscribeRobotState(
   const std::string &robot_accel_topic) {
-
   robot_ee_acceleration_sub_ = nodeHandle_->subscribe(
     robot_accel_topic, 1,  &LoadShareEstimator::callback_ee_accel, this,
     ros::TransportHints().reliable().tcpNoDelay());
@@ -173,12 +174,12 @@ bool LoadShareEstimator::subscribeRobotState(
   return true;
 }
 
-void LoadShareEstimator::callback_ee_accel(const geometry_msgs::Accel::ConstPtr &msg) {
+void LoadShareEstimator::callback_ee_accel(
+    const geometry_msgs::Accel::ConstPtr &msg) {
   latest_ee_acceleration_ = *msg;
 }
 
 void LoadShareEstimator::computeEEAccelerationInWorldFrame() {
-
   // The acceleration messages are expressed in the robot root.
   Eigen::Vector3d ee_accel_robot_root;
   ee_accel_robot_root << latest_ee_acceleration_.linear.x,
@@ -197,43 +198,65 @@ bool LoadShareEstimator::work(bool do_publish /* = true */) {
   computeEEAccelerationInWorldFrame();
 
   // Expected forces due to object dynamics (acceleration).
-  current_forces_.dynamics_from_object = -(expected_forces_.mass_matrix_joint * robot_ee_accel_);
+  current_forces_.dynamics_from_object =
+      -(expected_forces_.mass_matrix_joint * robot_ee_accel_);
 
   // Forces due to motion + human (without gravity)
   current_forces_.motion_no_gravity = force_cur_ - expected_forces_.gravity_all;
 
   // Forces due to motion + human and force due to gravity of the object only
   // (remove the effect of the sensor and hand).
-  current_forces_.motion_object_only = force_cur_ - expected_forces_.gravity_tool_sensor;
+  current_forces_.motion_object_only =
+      (force_cur_ - expected_forces_.gravity_tool_sensor);
 
   // Compute force decomposition
   if (current_forces_.dynamics_from_object.norm() > 1e-1) {
     // Dynamics force sharing.
+    const double f_dot = current_forces_.motion_no_gravity.dot(
+        current_forces_.dynamics_from_object);
+    const double f_dynamics_norm =
+        current_forces_.dynamics_from_object.squaredNorm();
+
+    // Bound the load share between 0 and 1.
     load_share_.dynamics_load_share_cur = std::max(
-      std::min(current_forces_.motion_no_gravity.dot(current_forces_.dynamics_from_object) / current_forces_.dynamics_from_object.squaredNorm(), 1.0), 0.0);
-  }
-  else {
+        std::min(f_dot / f_dynamics_norm, 1.0), 0.0);
+  } else {
     load_share_.dynamics_load_share_cur = 1.0;
   }
-  load_share_.dynamics_load_share_cur = filters::exponentialSmoothing(load_share_.dynamics_load_share_cur, load_share_.dynamics_load_share_prev, smoothing_constant_load_share_);
+  load_share_.dynamics_load_share_cur = filters::exponentialSmoothing(
+      load_share_.dynamics_load_share_cur,
+      load_share_.dynamics_load_share_prev,
+      smoothing_constant_load_share_);
   load_share_.dynamics_load_share_prev = load_share_.dynamics_load_share_cur;
 
   // Compute load share. If the object mass is zero, the magnitude of the
   // expected force is also zero. So, we set the load share to 0.0.
-  const double norm_force_object = expected_forces_.gravity_object.squaredNorm();
+  const double norm_force_object =
+      expected_forces_.gravity_object.squaredNorm();
+  const auto dynamic_forces_share = load_share_.dynamics_load_share_cur *
+                         current_forces_.dynamics_from_object;
+
   if (norm_force_object > 1e-1) {
-    // Load force share.
-    load_share_.load_share_cur = std::max(std::min(
-      (current_forces_.motion_object_only - load_share_.dynamics_load_share_cur * current_forces_.dynamics_from_object).dot(expected_forces_.gravity_object) / norm_force_object,
-      1.0), 0.0);
+    // Load share.
+    const double tmp =
+        (current_forces_.motion_object_only - dynamic_forces_share).dot(
+            expected_forces_.gravity_object) / norm_force_object;
+    load_share_.load_share_cur = std::max(std::min(tmp, 1.0), 0.0);
   } else {
     load_share_.load_share_cur = 0.0;
   }
-  load_share_.load_share_cur = filters::exponentialSmoothing(load_share_.load_share_cur, load_share_.load_share_prev, smoothing_constant_load_share_);
+  load_share_.load_share_cur = filters::exponentialSmoothing(
+      load_share_.load_share_cur,
+      load_share_.load_share_prev,
+      smoothing_constant_load_share_);
   load_share_.load_share_prev = load_share_.load_share_cur;
 
-  // Internal force: the forces not due to motion (current_forces_.dynamics_from_object) or load sharing.
-  current_forces_.internal = current_forces_.motion_object_only - (load_share_.dynamics_load_share_cur * current_forces_.dynamics_from_object) - (expected_forces_.gravity_object * load_share_.load_share_cur);
+  // Internal force: the forces not due to motion
+  // (current_forces_.dynamics_from_object) or load sharing.
+  current_forces_.internal =
+      current_forces_.motion_object_only -
+      dynamic_forces_share -
+      (expected_forces_.gravity_object * load_share_.load_share_cur);
 
   if (do_publish) {
     publish();
@@ -309,7 +332,7 @@ bool LoadShareEstimator::waitForTransforms() {
 }
 
 void LoadShareEstimator::updateTransforms() {
-  try{
+  try {
     tf_listener_ft_sensor_.lookupTransform(
       "/world", tf_name_ft_sensor_, ros::Time(0), tf_ft_sensor_);
   } catch (tf::TransformException ex) {
