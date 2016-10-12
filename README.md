@@ -1,14 +1,30 @@
 # Load Share Estimation
 [![Build Status](https://travis-ci.com/epfl-lasa/load-share-estimation.svg?token=BqUQb763tsVV4QyzLgBy&branch=master)](https://travis-ci.com/epfl-lasa/load-share-estimation)
 
-This package estimates the proportion of an object's load supported by a robot,
-using readings from a force/torque sensor mounted on the robot wrist, and the
-state of the robot end-effector (including the position and acceleration).
+This ROS package is used to compute the load share of an object being supported by a robot and a third party (such as a person).
+The **load share** is the proportion of the object's weight supported by the robot, and varies during cooperative tasks such as manipulation or handovers.
+For example during a handover, the load share smoothly goes from 1.0 (the robot is supporting the object) to 0.0 (the human is supporting the object).
+Properly estimating this load share is key to enabling smooth human-robot handovers.
 
-The only necessary information about the object is the object's mass.
+Some features of this package are:
 
-We require a few transforms to be defined, namely a world frame, a robot root
-frame (the base), and a frame on the force/torque sensor.
+ - Works in any end-effector configuration: up, down, sideways, etc...
+ - Accounts for object dynamics (i.e. forces due to acceleration).
+ - Input-light: requires only force/torque sensor readings and end-effector acceleration.
+ - The only information necessary about the object is its *mass*.
+ - Only requires knowing a few masses in the system: the object, the tool (hand/gripper/etc..), and the force/torque sensor plate.
+ - Highly configurable: change topics, filtering parameters, masses, etc... through a simple yaml configuration file.
+
+The rest of this README explains in detail the necessary inputs and how to configure the package.
+We also provide a complete example using recorded data.
+
+This package is an open-source implementation of the load share estimation module in the following paper:
+
+> A Human-Inspired Controller for Fluid Human-Robot Handovers. International Conference on Humanoid Robots, 2016. Jose Medina, Felix Duvallet, Murali Karnam, and Aude Billard.
+
+If you use this package in your research, please cite the above paper.
+
+## Running a simple example.
 
 ## Inputs and required components
 
