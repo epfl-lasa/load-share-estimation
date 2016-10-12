@@ -3,6 +3,8 @@
 #ifndef _LOADSHAREPARAMS_H_
 #define _LOADSHAREPARAMS_H_
 
+#include <ros/ros.h>
+
 namespace load_share_estimation {
 
 class LoadShareParameters {
