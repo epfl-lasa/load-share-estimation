@@ -16,6 +16,7 @@ int main(int argc, char **argv) {
     return -1;
   }
 
+  // Prints all parameters to file (and ros log info stream).
   params.log();
 
   load_share_estimation::LoadShareEstimator worker(&nodeHandle);

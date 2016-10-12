@@ -24,7 +24,7 @@ class LoadShareEstimator {
 
   bool init(const load_share_estimation::LoadShareParameters &parameters);
 
-  bool loadCalibration();
+  bool loadCalibration(const std::string &param_name);
   bool subscribeFTSensor(const std::string &ft_topic, double ft_delay_time);
   bool subscribeRobotState(const std::string &robot_accel_topic);
 

@@ -72,6 +72,7 @@ class LoadShareParameters {
 
   // Print all parameters to the ros info stream.
   void log() {
+    ROS_INFO_STREAM("=== Load Share Estimation Parameters ===");
     ROS_INFO_STREAM("Masses:");
     ROS_INFO_STREAM("   object: " << object_mass);
     ROS_INFO_STREAM("   tool: " << tool_mass);
@@ -90,6 +91,7 @@ class LoadShareParameters {
     ROS_INFO_STREAM("   Smoothing, torque: " << smoothing_torque);
 
     ROS_INFO_STREAM("Force/Torque sensor delay: " << ft_delay);
+    ROS_INFO_STREAM("=== /Load Share Estimation Parameters ===");
   }
 
   // Object masses.

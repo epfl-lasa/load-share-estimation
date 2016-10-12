@@ -28,19 +28,20 @@ LoadShareEstimator::LoadShareEstimator(ros::NodeHandle *nodeHandle)
 bool LoadShareEstimator::init(const LoadShareParameters &parameters) {
   ROS_INFO_STREAM("Load Share Estimator initialization starting...");
 
-  const std::string topic_load_share = "load_share";
-  const std::string topic_ft_sensor = "/ft_sensor/netft_data";
-  const std::string topic_robot_ee_accel = "/lwr/ee_accel";
-  const double ft_delay = 0.01;
+  const std::string topic_load_share = parameters.topic_out_load_share;
+  const std::string topic_ft_sensor = parameters.topic_in_ft_sensor;
+  const std::string topic_robot_ee_accel = parameters.topic_in_robot_ee_accel;
+  const double ft_delay = parameters.ft_delay;
 
-  // TODO Get these from yaml parameters.
-  masses_.object = 0.514;
-  masses_.tool = 1.453;
-  masses_.ft_plate = 0.112;
+  masses_.object = parameters.object_mass;
+  masses_.tool = parameters.tool_mass;
+  masses_.ft_plate = parameters.ft_plate_mass;
 
-  if(!loadCalibration()) {
+  if(!loadCalibration(parameters.param_name_calibration_orientation)) {
     ROS_ERROR("Could not load f/t sensor calibration information.");
-    ROS_ERROR("Did you run the calibration script?");  // TODO provide name.
+    ROS_ERROR_STREAM("I looked for information in this parameter: " <<
+                     parameters.param_name_calibration_orientation);
+    ROS_ERROR("Did you run the calibration script?");
     return false;
   }
   // Note that you should 'update' the object mass *after* loading the f/t
@@ -63,10 +64,9 @@ bool LoadShareEstimator::init(const LoadShareParameters &parameters) {
   return true;
 }
 
-bool LoadShareEstimator::loadCalibration() {
+bool LoadShareEstimator::loadCalibration(const std::string &param_name) {
 
   std::vector<double> lwr_ft_calib_orientation_list;
-  const std::string param_name = "/lwr_orientation_at_calibration";
   if (!nodeHandle_->getParam(param_name, lwr_ft_calib_orientation_list)) {
     ROS_WARN_STREAM("Could not get calibration from param server: "
                     << param_name);
