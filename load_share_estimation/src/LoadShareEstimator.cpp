@@ -36,6 +36,9 @@ bool LoadShareEstimator::init(const LoadShareParameters &parameters) {
   masses_.object = parameters.object_mass;
   masses_.tool = parameters.tool_mass;
   masses_.ft_plate = parameters.ft_plate_mass;
+  smoothing_constant_force_ = parameters.smoothing_force;
+  smoothing_constant_torque_ = parameters.smoothing_torque;
+  smoothing_constant_load_share_ = parameters.smoothing_load_share;
 
   if(!loadCalibration(parameters.param_name_calibration_orientation)) {
     ROS_ERROR("Could not load f/t sensor calibration information.");
@@ -126,8 +129,10 @@ void LoadShareEstimator::computeSmoothedFTInWorldFrame() {
   Eigen::Vector3d torque_world = rot*(torque + ft_calibration_.torque_bias);
 
   for (size_t i=0 ; i < 3 ; i ++ ) {
-    force_cur_(i) = filters::exponentialSmoothing(force_world(i), force_prev_(i), 0.25);
-    torque_cur_(i) = filters::exponentialSmoothing(torque_world(i), torque_prev_(i), 0.25);
+    force_cur_(i) = filters::exponentialSmoothing(force_world(i), force_prev_(i),
+                                                  smoothing_constant_force_);
+    torque_cur_(i) = filters::exponentialSmoothing(torque_world(i), torque_prev_(i),
+                                                   smoothing_constant_torque_);
   }
 
   force_prev_ = force_cur_;
@@ -214,7 +219,7 @@ bool LoadShareEstimator::work(bool do_publish /* = true */) {
   else {
     load_share_.dynamics_load_share_cur = 1.0;
   }
-  load_share_.dynamics_load_share_cur = filters::exponentialSmoothing(load_share_.dynamics_load_share_cur, load_share_.dynamics_load_share_prev, 0.1);
+  load_share_.dynamics_load_share_cur = filters::exponentialSmoothing(load_share_.dynamics_load_share_cur, load_share_.dynamics_load_share_prev, smoothing_constant_load_share_);
   load_share_.dynamics_load_share_prev = load_share_.dynamics_load_share_cur;
 
   // Compute load share. If the object mass is zero, the magnitude of the
@@ -228,7 +233,7 @@ bool LoadShareEstimator::work(bool do_publish /* = true */) {
   } else {
     load_share_.load_share_cur = 0.0;
   }
-  load_share_.load_share_cur = filters::exponentialSmoothing(load_share_.load_share_cur, load_share_.load_share_prev, 0.1);
+  load_share_.load_share_cur = filters::exponentialSmoothing(load_share_.load_share_cur, load_share_.load_share_prev, smoothing_constant_load_share_);
   load_share_.load_share_prev = load_share_.load_share_cur;
 
   // Internal force: the forces not due to motion (current_forces_.dynamics_from_object) or load sharing.

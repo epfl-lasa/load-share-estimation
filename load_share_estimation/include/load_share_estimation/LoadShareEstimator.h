@@ -57,7 +57,8 @@ protected:
   Eigen::Vector3d force_prev_;
   Eigen::Vector3d torque_cur_;
   Eigen::Vector3d torque_prev_;
-  const double ft_smoothing_constant_ = 0.25;
+  double smoothing_constant_force_;
+  double smoothing_constant_torque_;
 
   // FT sensor calibration variables: the baseline forces and torques at
   // calibration time and the sensor orientation at the calibration time.
@@ -140,6 +141,7 @@ protected:
     double dynamics_load_share_prev;
   };
   load_share_t load_share_;
+  double smoothing_constant_load_share_;
 
   Eigen::Vector3d robot_ee_accel_;
   geometry_msgs::Accel latest_ee_acceleration_;

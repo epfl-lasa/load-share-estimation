@@ -24,6 +24,8 @@ masses:
 # with the filtered acceleration signal).
 ft_sensor_delay: 0.1
 
+# Parameters (alpha) for exponential smoothing
+#   x = alpha * cur_raw + (1 - alpha) * x_last
 filtering_params:
   smoothing_load_share: 0.1
   smoothing_force: 0.25
