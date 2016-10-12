@@ -34,7 +34,6 @@ bool LoadShareEstimator::init(const LoadShareParameters &parameters) {
   const double ft_delay = 0.01;
 
   // TODO Get these from yaml parameters.
-
   masses_.object = 0.514;
   masses_.tool = 1.453;
   masses_.ft_plate = 0.112;

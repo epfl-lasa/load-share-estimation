@@ -7,14 +7,16 @@ int main(int argc, char **argv) {
 
   // We initialize the node handle with a namespace, to keep all topics
   // together.
-  ros::NodeHandle nodeHandle("load_share_estimator");
+  ros::NodeHandle nodeHandle;
 
   load_share_estimation::LoadShareParameters params;
-  if(!params.fromParamServer()) {
+  if(!params.fromParamServer(&nodeHandle)) {
     ROS_ERROR("Could not load parameters from param server.");
     ROS_ERROR("Exiting.");
     return -1;
   }
+
+  params.log();
 
   load_share_estimation::LoadShareEstimator worker(&nodeHandle);
   if (!worker.init(params)) {
