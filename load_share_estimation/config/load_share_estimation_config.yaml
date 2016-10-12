@@ -2,7 +2,6 @@
 topics:
   ft_sensor: '/ft_sensor/netft_data'
   robot_ee_accel: '/lwr/ee_accel'
-  load_share: 'load_share'
 
 # Name of the ROS parameter where the robot orientation *at calibration time*
 # was stored.

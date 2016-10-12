@@ -28,7 +28,6 @@ LoadShareEstimator::LoadShareEstimator(ros::NodeHandle *nodeHandle)
 bool LoadShareEstimator::init(const LoadShareParameters &parameters) {
   ROS_INFO_STREAM("Load Share Estimator initialization starting...");
 
-  const std::string topic_load_share = parameters.topic_out_load_share;
   const std::string topic_ft_sensor = parameters.topic_in_ft_sensor;
   const std::string topic_robot_ee_accel = parameters.topic_in_robot_ee_accel;
   const double ft_delay = parameters.ft_delay;
@@ -335,17 +334,19 @@ bool LoadShareEstimator::initPublishers() {
   publishers_.load_share =
     nodeHandle_->advertise<std_msgs::Float64>("load_share", 10);
   publishers_.dynamics_load_share =
-    nodeHandle_->advertise<std_msgs::Float64>("dynamics_load_share", 10);
+    nodeHandle_->advertise<std_msgs::Float64>("dynamic_load_share", 10);
   publishers_.internal_wrench =
     nodeHandle_->advertise<geometry_msgs::WrenchStamped>("internal_wrench", 10);
 
-
   publishers_.measured_force_world_cur =
-    nodeHandle_->advertise<geometry_msgs::WrenchStamped>("debug/measured_force_world", 10);
+    nodeHandle_->advertise<geometry_msgs::WrenchStamped>(
+        "debug/measured_force_world", 10);
   publishers_.dynamics_from_object_expected =
-    nodeHandle_->advertise<geometry_msgs::WrenchStamped>("debug/dynamics_from_object_expected", 10);
+    nodeHandle_->advertise<geometry_msgs::WrenchStamped>(
+        "debug/dynamics_from_object_expected", 10);
   publishers_.dynamics_from_object_observed =
-    nodeHandle_->advertise<geometry_msgs::WrenchStamped>("debug/dynamics_from_object_observed", 10);
+    nodeHandle_->advertise<geometry_msgs::WrenchStamped>(
+        "debug/dynamics_from_object_observed", 10);
 
   return true;
 }

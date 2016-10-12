@@ -56,9 +56,6 @@ class LoadShareParameters {
                        param_name_calibration_orientation))
       return false;
 
-    if (!getParamString(nodeHandle, "topics/load_share",
-                       topic_out_load_share))
-      return false;
     if (!getParamString(nodeHandle, "topics/ft_sensor",
                        topic_in_ft_sensor))
       return false;
@@ -79,7 +76,6 @@ class LoadShareParameters {
     ROS_INFO_STREAM("   F/T plate: " << ft_plate_mass);
 
     ROS_INFO_STREAM("Topics:");
-    ROS_INFO_STREAM("   Load share (out): " << topic_out_load_share);
     ROS_INFO_STREAM("   Force/torque sensor (in): " << topic_in_ft_sensor);
     ROS_INFO_STREAM("   Robot acceleration (in): " << topic_in_robot_ee_accel);
     ROS_INFO_STREAM("Parameter for calibration orientation: "
@@ -103,7 +99,6 @@ class LoadShareParameters {
   std::string param_name_calibration_orientation;
 
   // Name of topics.
-  std::string topic_out_load_share;
   std::string topic_in_ft_sensor;
   std::string topic_in_robot_ee_accel;
 
