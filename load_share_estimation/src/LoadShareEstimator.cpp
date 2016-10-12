@@ -97,7 +97,7 @@ bool LoadShareEstimator::subscribeFTSensor(
     boost::bind(&LoadShareEstimator::callback_ft_sensor_filtered, this, _1));
 
   ROS_INFO_STREAM("Subscribed to f/t data (with a delay of " << ft_delay_time
-                  << ") on topic: " <<  ft_topic);
+                  << "sec) on topic: " <<  ft_topic);
 
   return true;
 }
@@ -166,7 +166,6 @@ void LoadShareEstimator::setObjectMass(double object_mass) {
 bool LoadShareEstimator::subscribeRobotState(
   const std::string &robot_accel_topic) {
 
-  ROS_WARN("Implement this.");
   robot_ee_acceleration_sub_ = nodeHandle_->subscribe(
     robot_accel_topic, 1,  &LoadShareEstimator::callback_ee_accel, this,
     ros::TransportHints().reliable().tcpNoDelay());

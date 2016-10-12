@@ -9,6 +9,7 @@ int main(int argc, char **argv) {
   // together.
   ros::NodeHandle nodeHandle;
 
+  // Read all configuration parameters from the param server.
   load_share_estimation::LoadShareParameters params;
   if(!params.fromParamServer(&nodeHandle)) {
     ROS_ERROR("Could not load parameters from param server.");
@@ -28,12 +29,11 @@ int main(int argc, char **argv) {
   // Allow the subscribers and publishers to connect.
   ros::Duration(0.5).sleep();
 
-  ROS_INFO_STREAM("Node started");
+  ROS_INFO_STREAM("Node started. Publishing load share...");
   ros::Rate rate = ros::Rate(300);
   while (ros::ok()) {
+    // Process all info (work), then spin and sleep.
     worker.work();
-
-    // Don't forget to call work to process messages, then sleep.
     ros::spinOnce();
     rate.sleep();
   }
