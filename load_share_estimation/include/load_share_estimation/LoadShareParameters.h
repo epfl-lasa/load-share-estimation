@@ -1,12 +1,11 @@
 // Author: Felix Duvallet on 8/30/16.
 
-#ifndef PROJECT_LOADSHAREPARAMS_H
-#define PROJECT_LOADSHAREPARAMS_H
+#ifndef _LOADSHAREPARAMS_H_
+#define _LOADSHAREPARAMS_H_
 
 namespace load_share_estimation {
 
 class LoadShareParameters {
-
  public:
   LoadShareParameters() { }
 
@@ -32,38 +31,38 @@ class LoadShareParameters {
   }
 
   bool fromParamServer(ros::NodeHandle *nodeHandle) {
-    if(!getParamDouble(nodeHandle, "masses/object", object_mass))
+    if (!getParamDouble(nodeHandle, "masses/object", object_mass))
       return false;
 
-    if(!getParamDouble(nodeHandle, "masses/tool", tool_mass))
+    if (!getParamDouble(nodeHandle, "masses/tool", tool_mass))
       return false;
 
-    if(!getParamDouble(nodeHandle, "masses/ft_plate", ft_plate_mass))
+    if (!getParamDouble(nodeHandle, "masses/ft_plate", ft_plate_mass))
       return false;
 
-    if(!getParamDouble(nodeHandle, "filtering_params/smoothing_load_share",
+    if (!getParamDouble(nodeHandle, "filtering_params/smoothing_load_share",
                        smoothing_load_share))
       return false;
-    if(!getParamDouble(nodeHandle, "filtering_params/smoothing_force",
+    if (!getParamDouble(nodeHandle, "filtering_params/smoothing_force",
                        smoothing_force))
       return false;
-    if(!getParamDouble(nodeHandle, "filtering_params/smoothing_torque",
+    if (!getParamDouble(nodeHandle, "filtering_params/smoothing_torque",
                        smoothing_torque))
       return false;
-    if(!getParamDouble(nodeHandle, "ft_sensor_delay", ft_delay))
+    if (!getParamDouble(nodeHandle, "ft_sensor_delay", ft_delay))
       return false;
 
-    if(!getParamString(nodeHandle, "calibration_orientation_param_name",
+    if (!getParamString(nodeHandle, "calibration_orientation_param_name",
                        param_name_calibration_orientation))
       return false;
 
-    if(!getParamString(nodeHandle, "topics/load_share",
+    if (!getParamString(nodeHandle, "topics/load_share",
                        topic_out_load_share))
       return false;
-    if(!getParamString(nodeHandle, "topics/ft_sensor",
+    if (!getParamString(nodeHandle, "topics/ft_sensor",
                        topic_in_ft_sensor))
       return false;
-    if(!getParamString(nodeHandle, "topics/robot_ee_accel",
+    if (!getParamString(nodeHandle, "topics/robot_ee_accel",
                        topic_in_robot_ee_accel))
       return false;
 
@@ -82,6 +81,8 @@ class LoadShareParameters {
     ROS_INFO_STREAM("   Load share (out): " << topic_out_load_share);
     ROS_INFO_STREAM("   Force/torque sensor (in): " << topic_in_ft_sensor);
     ROS_INFO_STREAM("   Robot acceleration (in): " << topic_in_robot_ee_accel);
+    ROS_INFO_STREAM("Parameter for calibration orientation: "
+                    << param_name_calibration_orientation);
 
     ROS_INFO_STREAM("Filtering parameters");
     ROS_INFO_STREAM("   Smoothing, load share: " << smoothing_load_share);
@@ -114,4 +115,4 @@ class LoadShareParameters {
 
 }   // namespace load_share_estimation
 
-#endif //PROJECT_LOADSHAREPARAMS_H
+#endif  // _LOADSHAREPARAMS_H_
