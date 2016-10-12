@@ -30,14 +30,14 @@ class LoadShareEstimator {
 
   bool initPublishers();
 
-  bool work(bool publish=true);
+  bool work(bool publish = true);
 
   void publish();
 
   void computeSmoothedFTInWorldFrame();
   void computeEEAccelerationInWorldFrame();
 
-protected:
+ protected:
   ros::NodeHandle *nodeHandle_;
 
   load_share_estimation::LoadShareParameters parameters_;
@@ -91,12 +91,11 @@ protected:
     Eigen::Vector3d gravity_all;
 
     // Diagonal matrix with the joint mass. This isn't a force. Sue us.
-    Eigen::Matrix<double,3,3> mass_matrix_joint;
+    Eigen::Matrix<double, 3, 3> mass_matrix_joint;
   };
   expected_forces_t expected_forces_;
 
   struct current_forces_t {
-
     Eigen::Vector3d dynamics_from_object;  // f_dyn
     Eigen::Vector3d motion_no_gravity;  // f_obs_dyn
     Eigen::Vector3d motion_object_only;  // f_obs
@@ -149,7 +148,6 @@ protected:
 
   Eigen::Vector3d robot_ee_accel_;
   geometry_msgs::Accel latest_ee_acceleration_;
-
 };
 
 }   // namespace load_share_estimation

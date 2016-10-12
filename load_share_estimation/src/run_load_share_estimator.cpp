@@ -11,7 +11,7 @@ int main(int argc, char **argv) {
 
   // Read all configuration parameters from the param server.
   load_share_estimation::LoadShareParameters params;
-  if(!params.fromParamServer(&nodeHandle)) {
+  if (!params.fromParamServer(&nodeHandle)) {
     ROS_ERROR("Could not load parameters from param server.");
     ROS_ERROR("Exiting.");
     return -1;
