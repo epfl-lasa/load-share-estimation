@@ -308,7 +308,7 @@ bool LoadShareEstimator::waitForTransforms() {
     tf_ready_sensor = tf_listener_ft_sensor_.waitForTransform(
       "/world", tf_name_ft_sensor_, ros::Time(0), ros::Duration(3.0));
     if (!tf_ready_sensor) {
-      ROS_INFO_STREAM("Still waiting for ft_sensor transform... ");
+      ROS_INFO_STREAM("Still waiting for transform: " << tf_name_ft_sensor_);
     }
   } catch (tf::TransformException ex) {
     ROS_ERROR("TF exception: %s", ex.what());
@@ -320,7 +320,7 @@ bool LoadShareEstimator::waitForTransforms() {
     tf_ready_robot = tf_listener_robot_.waitForTransform(
       "/world", tf_name_robot_root_, ros::Time(0), ros::Duration(3.0));
     if (!tf_ready_robot) {
-      ROS_INFO_STREAM("Still waiting for /palm_link transform... ");
+      ROS_INFO_STREAM("Still waiting for transform: " << tf_name_robot_root_);
     }
   }
   catch (tf::TransformException ex) {
