@@ -205,7 +205,7 @@ bool LoadShareEstimator::work(bool do_publish /* = true */) {
   current_forces_.motion_no_gravity = force_cur_ - expected_forces_.gravity_all;
 
   // Forces due to motion + human and force due to gravity of the object only
-  // (remove the effect of the sensor and hand).
+  // (i.e. remove the effect of the sensor and hand).
   current_forces_.motion_object_only =
       (force_cur_ - expected_forces_.gravity_tool_sensor);
 
