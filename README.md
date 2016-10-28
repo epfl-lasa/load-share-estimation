@@ -30,23 +30,23 @@ NOTE: Everything here is run from the root of the repository.
 
 1. Start roscore & load the parameters
 ```
-    roscore
+$ roscore
 ```
 ```
-    rosparam load load_share_demo/params.yaml
+$ rosparam load load_share_demo/params.yaml
 ```
 
 1. Start the load share estimation node
 ```
-   roslaunch load_share_estimation load_share_estimation.launch config:=load_share_estimation/config/load_share_estimation_config.yaml
+$ roslaunch load_share_estimation load_share_estimation.launch config:=load_share_estimation/config/load_share_estimation_config.yaml
 ```
 1. Play the bag file
 ```
-    rosbag play load_share_demo/load_share_demo.bag
+$ rosbag play load_share_demo/load_share_demo.bag
 ```
 1. Plot the load share
 ```
-    rqt_plot /load_share_estimation/load_share
+$ rqt_plot /load_share_estimation/load_share
 ```
 
 You should see the load share evolve over time, always between zero and one:
@@ -103,7 +103,7 @@ f/t sensor and robot acceleration, the name of the TF frames, the mass of
 each component, and various filtering parameters:
 
 ```
-﻿# Topics to subscribe to.
+# Topics to subscribe to.
 topics:
   ft_sensor: '/ft_sensor/netft_data'
   robot_ee_accel: '/lwr/ee_accel'
@@ -151,8 +151,8 @@ The node outputs information on several topic:
    counteracting forces between the robot and the other party (these are
    unecessary to accomplish a transfer).
  * /load_share_estimation/dynamic_load_share [std_msgs/Float64]:
-   The proportion of the load share which is due
-   to object dynamics (i.e. robot motion) and not the object transfer.
+   The proportion of the dynamics forces which induce motion that the robot
+   is accounting for.
 
 In addition, we publish some debugging information on sub-topics:
 
