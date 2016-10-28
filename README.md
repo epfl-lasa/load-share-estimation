@@ -22,7 +22,9 @@ This package is an open-source implementation of the load share estimation modul
 
 > A Human-Inspired Controller for Fluid Human-Robot Handovers. International Conference on Humanoid Robots, 2016. Jose Medina, Felix Duvallet, Murali Karnam, and Aude Billard.
 
-If you use this package in your research, please cite the above paper.
+If you use this package in your research, please cite the above paper. You can see a video showing how this package performs by clicking in the following image
+
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/Ac4kgipC7A0/0.jpg)](https://www.youtube.com/watch?v=Ac4kgipC7A0)
 
 ## Running a simple example.
 
