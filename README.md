@@ -26,6 +26,10 @@ If you use this package in your research, please cite the above paper. You can s
 
 [![Handovers@LASA](https://img.youtube.com/vi/Ac4kgipC7A0/0.jpg)](https://www.youtube.com/watch?v=Ac4kgipC7A0)
 
+**Authors**: Felix Duvallet and Jose Medina. 
+
+This work was funded by the Horizon 2020 Framework Programme of the European Comission for the [SecondHands](https://secondhands.eu/) project.
+
 ## Running a simple example.
 
 NOTE: Everything here is run from the root of the repository.
