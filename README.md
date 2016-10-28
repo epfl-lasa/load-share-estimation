@@ -29,26 +29,29 @@ If you use this package in your research, please cite the above paper.
 NOTE: Everything here is run from the root of the repository.
 
 1. Start roscore & load the parameters
-
+```
     roscore
+```
+```
     rosparam load load_share_demo/params.yaml
+```
 
 1. Start the load share estimation node
-
-   ﻿roslaunch load_share_estimation load_share_estimation.launch config:=load_share_estimation/config/load_share_estimation_config.yaml
-
+```
+   roslaunch load_share_estimation load_share_estimation.launch config:=load_share_estimation/config/load_share_estimation_config.yaml
+```
 1. Play the bag file
-
+```
     rosbag play load_share_demo/load_share_demo.bag
-
+```
 1. Plot the load share
-
+```
     rqt_plot /load_share_estimation/load_share
-
+```
 
 You should see the load share evolve over time, always between zero and one:
 
-![Load Share](﻿load_share_demo/load_share_result.png)
+![Load Share](load_share_demo/load_share_result.png)
 
 ## Inputs and required components
 
