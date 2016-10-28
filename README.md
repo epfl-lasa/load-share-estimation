@@ -30,6 +30,11 @@ If you use this package in your research, please cite the above paper. You can s
 
 This work was funded by the Horizon 2020 Framework Programme of the European Comission for the [SecondHands](https://secondhands.eu/) project.
 
+<a href="https://secondhands.eu/">
+<img src="https://secondhands.eu/wp-content/uploads/2015/06/Second-hands-logo_final_sml.jpg" href="https://secondhands.eu/" width="150">
+</a>
+
+
 ## Running a simple example.
 
 NOTE: Everything here is run from the root of the repository.
