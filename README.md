@@ -24,7 +24,7 @@ This package is an open-source implementation of the load share estimation modul
 
 If you use this package in your research, please cite the above paper. You can see a video showing how this package performs by clicking in the following image
 
-[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/Ac4kgipC7A0/0.jpg)](https://www.youtube.com/watch?v=Ac4kgipC7A0)
+[![Handovers@LASA](https://img.youtube.com/vi/Ac4kgipC7A0/0.jpg)](https://www.youtube.com/watch?v=Ac4kgipC7A0)
 
 ## Running a simple example.
 
