@@ -18,7 +18,7 @@ Some features of this package are:
 The rest of this README explains in detail the necessary inputs and how to configure the package.
 We also provide a complete example using recorded data.
 
-This package is an open-source implementation of the load share estimation module in the following paper:
+This package is an open-source implementation of the load share estimation module in the <a href="https://secondhands.eu/wp-content/uploads/2016/10/humanoids16.pdf">following paper</a>:
 
 > A Human-Inspired Controller for Fluid Human-Robot Handovers. International Conference on Humanoid Robots, 2016. Jose Medina, Felix Duvallet, Murali Karnam, and Aude Billard.
 
